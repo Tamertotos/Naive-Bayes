@@ -6,11 +6,14 @@ public class Bayes {
     private List<Mushroom> mushroomList;
     private List<Mushroom> mushroomTestList;
     private Map<String, Map<Integer, Map<String, Integer>>> map;
+    private int eCount;
+    private int pCount;
 
     public Bayes(List<Mushroom> mushroomList, List<Mushroom> mushroomTestList) {
         this.mushroomList = mushroomList;
         this.mushroomTestList = mushroomTestList;
         this.map = new HashMap<>();
+        createMap();
     }
 
 
@@ -18,6 +21,12 @@ public class Bayes {
 
         for(int i = 0; i < mushroomList.size(); i++){
             String key = mushroomList.get(i).label();
+
+            if (key.equals("p")){
+                this.pCount +=1;
+            } else {
+                this.eCount +=1;
+            }
 
             if (!map.containsKey(key)){
                 this.map.put(key, new HashMap<Integer, Map<String, Integer>>());
@@ -43,13 +52,23 @@ public class Bayes {
     }
 
     public void evaluate(){
+
+        int truePositive = 0;
+        int trueNegative = 0;
+        int falsePositive = 0;
+        int falseNegative = 0;
+
         for (int i = 0; i < mushroomTestList.size(); i++ ){
-            double eValue = 1;
-            double pValue = 1;
+            double eValue = (double) this.eCount / mushroomList.size();
+            double pValue = (double) this.pCount/ mushroomList.size();
 
             for (int j = 0; j < map.get("e").size(); j++){
                 double eNumerator = 0;
                 double pNumerator = 0;
+
+
+                double eDenominator = 0;
+                double pDenominator = 0;
 
                 if ( map.get("e").get(j).get(mushroomTestList.get(i).attributes()[j]) == null){
                     eNumerator += 1;
@@ -64,8 +83,6 @@ public class Bayes {
                      pNumerator += map.get("p").get(j).get(mushroomTestList.get(i).attributes()[j]);
                  }
 
-                double eDenominator = 0;
-                double pDenominator = 0;
 
                for (int elem : map.get("e").get(j).values()){
                    eDenominator += elem;
@@ -79,13 +96,36 @@ public class Bayes {
                pValue *= pNumerator/pDenominator;
             }
 
+
+
+            String prediction = "";
             if (eValue > pValue){
-                System.out.println("IT IS EDIBLE");
+               prediction = "e";
             } else {
-                System.out.println("IT IS POISONOUS");
+                prediction = "p";
             }
 
+
+            if (prediction.equals("p") && mushroomTestList.get(i).label().equals("p")){
+                truePositive += 1;
+            }  else if (prediction.equals("e")&& mushroomTestList.get(i).label().equals("e")){
+                trueNegative += 1;
+            } else if (prediction.equals("p") && mushroomTestList.get(i).label().equals("e")){
+                falsePositive += 1;
+            } else if (prediction.equals("e") && mushroomTestList.get(i).label().equals("p")){
+                falseNegative += 1;
+            }
         }
+
+        double accuracy =  (double)(truePositive + trueNegative) / mushroomTestList.size()  * 100;
+        double precision =  (double) truePositive / (truePositive + falsePositive);
+        double recall = (double) truePositive / (truePositive + falseNegative);
+        double fMeasure = (double) 2*precision*recall / (precision + recall);
+
+        System.out.println(accuracy + "% accuracy ");
+        System.out.println("Precision is: " + precision );
+        System.out.println("Recall is: " + recall);
+        System.out.println("F-measure is : " + fMeasure);
     }
 
     @Override

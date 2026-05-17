@@ -9,7 +9,6 @@ public class Main {
         List<Mushroom> mushroomsTest = new ArrayList<>(testData.readFile());
 
         Bayes bayes = new Bayes(mushroomsData, mushroomsTest);
-        bayes.createMap();
         bayes.evaluate();
 
 
